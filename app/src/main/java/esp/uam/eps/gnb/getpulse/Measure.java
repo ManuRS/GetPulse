@@ -1,54 +1,65 @@
 package esp.uam.eps.gnb.getpulse;
 
 import android.content.Context;
-import android.graphics.PixelFormat;
 import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
-import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
-import android.widget.TextView;
+import android.hardware.Camera.PreviewCallback;
+import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Measure extends AppCompatActivity implements SurfaceHolder.Callback {
 
-    private static SurfaceView preview = null;
-    private static SurfaceHolder previewHolder = null;
-    private static Camera camera = null;
-    private static View image = null;
-    private static PowerManager.WakeLock wakeLock = null;
-
-    SurfaceHolder mSurfaceHolder;
-    SurfaceView mSurfaceView;
+    SurfaceHolder SurfaceHolder;
+    SurfaceView SurfaceView;
     public Camera mCamera;
     boolean mPreviewRunning;
+
+    private static int averageIndex = 0;
+    private static final int averageArraySize = 4;
+    private static final int[] averageArray = new int[averageArraySize];
+    public static Context c;
+
+
+    private static final AtomicBoolean processing = new AtomicBoolean(false);
+
+    private static double beats = 0;
+    private static long startTime = 0;
+    private static int beatsIndex = 0;
+    private static final int beatsArraySize = 3;
+    private static final int[] beatsArray = new int[beatsArraySize];
+
+    public static enum TYPE {
+        GREEN, RED
+    };
+
+    private static TYPE currentType = TYPE.GREEN;
+
+    public static TYPE getCurrent() {
+        return currentType;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_measure);
 
-        /*getWindow().setFormat(PixelFormat.TRANSLUCENT);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        WindowManager.LayoutParams.FLAG_FULLSCREEN);*/
+        SurfaceView = (SurfaceView) findViewById(R.id.preview);
+        SurfaceHolder = SurfaceView.getHolder();
+        SurfaceHolder.addCallback(this);
+        SurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
-        mSurfaceView = (SurfaceView) findViewById(R.id.preview);
-        mSurfaceHolder = mSurfaceView.getHolder();
-        mSurfaceHolder.addCallback(this);
-        mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        c = getApplicationContext();
     }
 
-    private static Camera.Size getSmallestPreviewSize(int width, int height, Camera.Parameters parameters) {
+    /*private static Camera.Size getSmallestPreviewSize(int width, int height, Camera.Parameters parameters) {
         Camera.Size result = null;
 
         for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
@@ -58,31 +69,28 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
                 } else {
                     int resultArea = result.width * result.height;
                     int newArea = size.width * size.height;
-
                     if (newArea < resultArea) result = size;
                 }
             }
         }
 
         return result;
-    }
+    }*/
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         mCamera = Camera.open();
+        mCamera.setPreviewCallback(previewCallback);
+        startTime = System.currentTimeMillis();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3){
-
-
-
         if (mPreviewRunning) {
             mCamera.stopPreview();
         }
         Camera.Parameters p = mCamera.getParameters();
-        //p.setPreviewSize(w, h);
-
+        p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
         mCamera.setParameters(p);
         try {
             mCamera.setPreviewDisplay(arg0);
@@ -90,6 +98,7 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
             e.printStackTrace();
         }
         setCameraDisplayOrientation(mCamera);
+
         mCamera.startPreview();
         mPreviewRunning = true;
     }
@@ -101,12 +110,14 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
         mCamera.release();
     }
 
+    /**
+     * FROM: http://stackoverflow.com/questions/4645960/how-to-set-android-camera-orientation-properly
+     * @param camera
+     */
     public void setCameraDisplayOrientation(android.hardware.Camera camera) {
         Camera.Parameters parameters = camera.getParameters();
-
         android.hardware.Camera.CameraInfo camInfo = new android.hardware.Camera.CameraInfo();
         android.hardware.Camera.getCameraInfo(0, camInfo);
-
 
         Display display = ((WindowManager) this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         int rotation = display.getRotation();
@@ -135,4 +146,100 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
         }
         camera.setDisplayOrientation(result);
     }
+
+    private static PreviewCallback previewCallback = new PreviewCallback() {
+
+
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            if (data == null) throw new NullPointerException();
+            Camera.Size size = camera.getParameters().getPreviewSize();
+            if (size == null) throw new NullPointerException();
+
+            if (!processing.compareAndSet(false, true)) return;
+
+            int width = size.width;
+            int height = size.height;
+
+            int imgAvg = ImageProcessing.decodeYUV420SPtoRedAvg(data.clone(), height, width);
+            // Log.i(TAG, "imgAvg="+imgAvg);
+            if (imgAvg == 0 || imgAvg == 255) {
+                processing.set(false);
+                return;
+            }
+
+            int averageArrayAvg = 0;
+            int averageArrayCnt = 0;
+            for (int i = 0; i < averageArray.length; i++) {
+                if (averageArray[i] > 0) {
+                    averageArrayAvg += averageArray[i];
+                    averageArrayCnt++;
+                }
+            }
+
+            int rollingAverage = (averageArrayCnt > 0) ? (averageArrayAvg / averageArrayCnt) : 0;
+
+            TYPE newType = currentType;
+
+            if (imgAvg < rollingAverage) {
+                newType = TYPE.RED;
+                if (newType != currentType) {
+                    beats++;
+                    // Log.d(TAG, "BEAT!! beats="+beats);
+                }
+            } else if (imgAvg > rollingAverage) {
+                newType = TYPE.GREEN;
+            }
+
+            if (averageIndex == averageArraySize) averageIndex = 0;
+            averageArray[averageIndex] = imgAvg;
+            averageIndex++;
+
+            // Transitioned from one state to another to the same
+            /*if (newType != currentType) {
+                currentType = newType;
+                image.postInvalidate();
+            }*/
+
+            long endTime = System.currentTimeMillis();
+            double totalTimeInSecs = (endTime - startTime) / 1000d;
+            if (totalTimeInSecs >= 10) {
+                double bps = (beats / totalTimeInSecs);
+                int dpm = (int) (bps * 60d);
+                if (dpm < 30 || dpm > 180) {
+                    startTime = System.currentTimeMillis();
+                    beats = 0;
+                    processing.set(false);
+                    return;
+                }
+
+                // Log.d(TAG,
+                // "totalTimeInSecs="+totalTimeInSecs+" beats="+beats);
+
+                if (beatsIndex == beatsArraySize) beatsIndex = 0;
+                beatsArray[beatsIndex] = dpm;
+                beatsIndex++;
+
+                int beatsArrayAvg = 0;
+                int beatsArrayCnt = 0;
+                for (int i = 0; i < beatsArray.length; i++) {
+                    if (beatsArray[i] > 0) {
+                        beatsArrayAvg += beatsArray[i];
+                        beatsArrayCnt++;
+                    }
+                }
+                int beatsAvg = (beatsArrayAvg / beatsArrayCnt);
+
+                Toast t = Toast.makeText(c, String.valueOf(beatsAvg), Toast.LENGTH_LONG);
+                t.show();
+
+                //text.setText(String.valueOf(beatsAvg));
+                startTime = System.currentTimeMillis();
+                beats = 0;
+            }
+            processing.set(false);
+        }
+
+    };
+
 }
