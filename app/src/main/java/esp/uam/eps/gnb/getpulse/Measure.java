@@ -1,7 +1,10 @@
 package esp.uam.eps.gnb.getpulse;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Camera;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Display;
@@ -232,8 +235,11 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
 
                 Toast t = Toast.makeText(c, String.valueOf(beatsAvg), Toast.LENGTH_LONG);
                 t.show();
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(c);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("LAST_MEASURE", String.valueOf(beatsAvg));
+                editor.commit();
 
-                //text.setText(String.valueOf(beatsAvg));
                 startTime = System.currentTimeMillis();
                 beats = 0;
             }
