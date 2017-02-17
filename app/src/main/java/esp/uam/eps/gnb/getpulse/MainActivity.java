@@ -19,13 +19,14 @@ public class MainActivity extends AppCompatActivity{
 
     @Override
     protected void onResume(){
+        super.onResume();
 
         String number = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("LAST_MEASURE", "0");
         if (number!="0") {
-            super.onResume();
+
             TextView tv = (TextView) findViewById(R.id.number);
             tv.setText(number);
-            
+
             RatingBar rb = (RatingBar) findViewById(R.id.ratingBar);
             tv = (TextView) findViewById(R.id.text);
             if (Double.parseDouble(number) > 90) {

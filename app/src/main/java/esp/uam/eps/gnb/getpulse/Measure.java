@@ -221,7 +221,6 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
             // Transitioned from one state to another to the same
             /*if (newType != currentType) {
                 currentType = newType;
-                image.postInvalidate();
             }*/
 
             long endTime = System.currentTimeMillis();
