@@ -1,7 +1,7 @@
 # GetPulse
 ### Android app to measure heart rate via flashlight
  
-### The result may vary depends on the device (and can not have any sense)
+#### The result may vary depends on the device (and can not have any sense)
 
 ## Credits
 Algorithm and image analysis from:
