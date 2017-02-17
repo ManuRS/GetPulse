@@ -83,16 +83,16 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
     public void surfaceCreated(SurfaceHolder holder) {
         mCamera = Camera.open();
         Camera.Parameters parameters = mCamera.getParameters();
-        /*if(parameters.getMaxExposureCompensation() != parameters.getMinExposureCompensation()){
+        if(parameters.getMaxExposureCompensation() != parameters.getMinExposureCompensation()){
             parameters.setExposureCompensation(0);
         }
-        if(parameters.isAutoExposureLockSupported()){
+        /*if(parameters.isAutoExposureLockSupported()){
             parameters.setAutoExposureLock(true);
-         }
-        if(parameters.isAutoWhiteBalanceLockSupported()){
+         }*/
+        /*if(parameters.isAutoWhiteBalanceLockSupported()){
             parameters.setAutoWhiteBalanceLock(true);
-        }
-        mCamera.setParameters(parameters);*/
+        }*/
+        mCamera.setParameters(parameters);
         mCamera.setPreviewCallback(previewCallback);
         startTime = System.currentTimeMillis();
     }
