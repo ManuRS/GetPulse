@@ -38,7 +38,7 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
     private static final int beatsArraySize = 3;
     private static final int[] beatsArray = new int[beatsArraySize];
 
-    public static enum TYPE {
+    public enum TYPE {
         GREEN, RED
     };
 
@@ -59,6 +59,21 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
         SurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         c = getApplicationContext();
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        SurfaceView.getHolder().removeCallback(this);
+    }
+
+    public void onPause() {
+        super.onPause();
+        if (mCamera != null) {
+            mCamera.setPreviewCallback(null);
+            SurfaceView.getHolder().removeCallback(this);
+            mCamera.release();
+        }
     }
 
     /*private static Camera.Size getSmallestPreviewSize(int width, int height, Camera.Parameters parameters) {
