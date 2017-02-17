@@ -18,17 +18,14 @@ import org.w3c.dom.Text;
 public class MainActivity extends AppCompatActivity{
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    protected void onResume(){
 
         String number = PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("LAST_MEASURE", "0");
-
         if (number!="0") {
+            super.onResume();
             TextView tv = (TextView) findViewById(R.id.number);
             tv.setText(number);
-
-
+            
             RatingBar rb = (RatingBar) findViewById(R.id.ratingBar);
             tv = (TextView) findViewById(R.id.text);
             if (Double.parseDouble(number) > 90) {
@@ -41,6 +38,13 @@ public class MainActivity extends AppCompatActivity{
                 tv.setText("Your heart rate is correct");
             }
         }
+
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 0);
