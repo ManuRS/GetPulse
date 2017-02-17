@@ -27,18 +27,19 @@ public class MainActivity extends AppCompatActivity{
         if (number!="0") {
             TextView tv = (TextView) findViewById(R.id.number);
             tv.setText(number);
-        }
 
-        RatingBar rb = (RatingBar) findViewById(R.id.ratingBar);
-        TextView tv = (TextView) findViewById(R.id.text);
-        if (Double.parseDouble(number)>90){
-            //Cosa mala
-            rb.setRating(0);
-            tv.setText("Your heart rate is to high");
-        }else{
-            //Cosa buena
-            rb.setRating(1);
-            tv.setText("Your heart rate is correct");
+
+            RatingBar rb = (RatingBar) findViewById(R.id.ratingBar);
+            tv = (TextView) findViewById(R.id.text);
+            if (Double.parseDouble(number) > 90) {
+                //Cosa mala
+                rb.setRating(0);
+                tv.setText("Your heart rate is to high");
+            } else {
+                //Cosa buena
+                rb.setRating(1);
+                tv.setText("Your heart rate is correct");
+            }
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {

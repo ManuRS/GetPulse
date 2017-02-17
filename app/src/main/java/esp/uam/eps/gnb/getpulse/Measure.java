@@ -1,7 +1,6 @@
 package esp.uam.eps.gnb.getpulse;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.Camera;
 import android.preference.PreferenceManager;
@@ -83,6 +82,17 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         mCamera = Camera.open();
+        Camera.Parameters parameters = mCamera.getParameters();
+        /*if(parameters.getMaxExposureCompensation() != parameters.getMinExposureCompensation()){
+            parameters.setExposureCompensation(0);
+        }
+        if(parameters.isAutoExposureLockSupported()){
+            parameters.setAutoExposureLock(true);
+         }
+        if(parameters.isAutoWhiteBalanceLockSupported()){
+            parameters.setAutoWhiteBalanceLock(true);
+        }
+        mCamera.setParameters(parameters);*/
         mCamera.setPreviewCallback(previewCallback);
         startTime = System.currentTimeMillis();
     }
@@ -126,18 +136,10 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
         int rotation = display.getRotation();
         int degrees = 0;
         switch (rotation) {
-            case Surface.ROTATION_0:
-                degrees = 0;
-                break;
-            case Surface.ROTATION_90:
-                degrees = 90;
-                break;
-            case Surface.ROTATION_180:
-                degrees = 180;
-                break;
-            case Surface.ROTATION_270:
-                degrees = 270;
-                break;
+            case Surface.ROTATION_0: degrees = 0; break;
+            case Surface.ROTATION_90: degrees = 90; break;
+            case Surface.ROTATION_180: degrees = 180; break;
+            case Surface.ROTATION_270: degrees = 270; break;
         }
 
         int result;
@@ -150,6 +152,9 @@ public class Measure extends AppCompatActivity implements SurfaceHolder.Callback
         camera.setDisplayOrientation(result);
     }
 
+    /**
+     * FROM: https://github.com/phishman3579/android-heart-rate-monitor
+     */
     private static PreviewCallback previewCallback = new PreviewCallback() {
 
 

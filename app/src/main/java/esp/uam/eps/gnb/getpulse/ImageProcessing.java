@@ -1,6 +1,10 @@
 package esp.uam.eps.gnb.getpulse;
 
 /**
+ * FROM: https://github.com/phishman3579/android-heart-rate-monitor
+ */
+
+/**
  * This abstract class is used to process images.
  *
  * @author Justin Wetherell <phishman3579@gmail.com>
