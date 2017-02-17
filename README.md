@@ -3,7 +3,7 @@
  
 The result may vary depends on the device (and can not have any sense)
 
-https://github.com/manurs/GetPulse/raw/master/GetPulse.apk
+[Download](https://github.com/manurs/GetPulse/raw/master/GetPulse.apk)
 
 ## Credits
 Algorithm and image analysis from:
